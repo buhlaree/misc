@@ -1,4 +1,4 @@
-# CashDispenser class contains bill_counting and dispensing methods
+# CashDispenser class contains bill_counting and bill_dispenser methods
 class CashDispenser
   NOMINALS = [100, 50, 20, 10, 5, 1].freeze
   CASH_LIMIT = 5000
@@ -17,7 +17,7 @@ class CashDispenser
       number_of_bills.push(total / item)
       total -= ((total / item) * item)
     end
-    return number_of_bills
+    number_of_bills
   end
 
   # Define a method that takes a 6 value array as a parameter and puts out a
@@ -29,12 +29,14 @@ class CashDispenser
     number_and_types.delete_if { |item| item[0].zero? }
     # Iterates through the revised number_and_types array and decides whether to
     # print "bill" or "bills" depending on the plural use of the word.
+    response = []
     number_and_types.each do |item|
-                            if item[0] == 1
-                              return "#{item[0]} #{CASH_SYMBOL}#{item[1]} bill"
-                            else
-                              return "#{item[0]} #{CASH_SYMBOL}#{item[1]} bills"
-                            end
-                          end
+      if item[0] == 1
+        response.push("#{item[0]} #{CASH_SYMBOL}#{item[1]} bill")
+      else
+        response.push("#{item[0]} #{CASH_SYMBOL}#{item[1]} bills")
+      end
+    end
+    response
   end
 end
