@@ -1,42 +1,63 @@
-# CashDispenser class contains bill_counting and bill_dispenser methods
 class CashDispenser
-  NOMINALS = [100, 50, 20, 10, 5, 1].freeze
-  CASH_LIMIT = 5000
-  CASH_SYMBOL = '$'.freeze
-
-  # Define a bill counting method with a default parameter value of "nil"
-  def self.bill_counter(total = nil)
-    return 'You did not enter a cash amount' if total.nil?
-    total = total.to_i.abs
-    # Prevents a withdrawal amount over the limit
-    return 'The daily cash limit is $5000' if total > 5000
-    # An array to store the numbers of each type of bill
-    number_of_bills = []
-    # Algorithm to store number of $100, $50, $20, $10, $5, $1 bills in an array
-    NOMINALS.each do |item|
-      number_of_bills.push(total / item)
-      total -= ((total / item) * item)
-    end
-    number_of_bills
+  def self.localize(language)
+    require_relative "./lang/#{language}.rb"
+    self
   end
-
-  # Define a method that takes a 6 value array as a parameter and puts out a
-  # list of the number of each type of bill.
-  def self.bill_dispenser(bill_array)
-    # Creates a 2-dimensional array from number_of_bills and types_of_bills
-    number_and_types = bill_array.zip(NOMINALS)
-    # Deletes instances where there are no bills of a certain type
-    number_and_types.delete_if { |item| item[0].zero? }
-    # Iterates through the revised number_and_types array and decides whether to
-    # print "bill" or "bills" depending on the plural use of the word.
-    response = []
-    number_and_types.each do |item|
-      if item[0] == 1
-        response.push("#{item[0]} #{CASH_SYMBOL}#{item[1]} bill")
+  def self.bill_counter(total)
+    original_request = total
+    bills = {}
+    session_hash = {}
+    left_over = $available
+    NOMINALS.each do |item|
+      bills[item.to_s.to_sym] = 0
+    end
+    $available.each do |key, value|
+      bill_type = key.to_s.to_i
+      number_available = value
+      number_needed = (total / bill_type)
+      if number_available.zero?
+        bills[key] = 0
+      elsif number_needed <= number_available
+        bills[key] = number_needed
+        total = total - (bill_type * number_needed)
+        left_over[key] = (value - number_needed)
       else
-        response.push("#{item[0]} #{CASH_SYMBOL}#{item[1]} bills")
+        actual = number_available
+        bills[key] = actual
+        total = total - (bill_type * actual)
+        left_over[key] = actual - actual
       end
     end
-    response
+    session_hash[:bills] = bills
+    session_hash[:total] = total
+    session_hash[:left_over] = left_over
+    session_hash[:original_request] = original_request
+    return session_hash
+  end
+  def self.bill_dispenser(hash)
+    if hash[:total] != 0
+      puts "There are not enough bills to fulfill your request!"
+      puts "Do you want to receive the partial amount of #{CASH_SYMBOL}#{(hash[:original_request] - hash[:total])}? y or n"
+      response = gets.chomp
+      if response == 'y'
+        puts "Dispensing..."
+        hash[:bills].each do |key, value|
+          puts "#{value} #{CASH_SYMBOL} #{key}" + (value == 1 ? ' bill' : ' bills') unless value == 0
+        end
+        $available = hash[:left_over]
+      elsif response == 'n'
+        puts "Thank you. Have a nice day."
+      else
+        puts "I'm sorry, I do not understand your response!"
+      end
+    elsif hash[:total] <= CASH_LIMIT
+      puts "Dispensing..."
+      hash[:bills].each do |key, value|
+        puts "#{value} #{CASH_SYMBOL} #{key}" + (value == 1 ? ' bill' : ' bills') unless value == 0
+      end
+      $available = hash[:left_over]
+    else
+      puts "I'm sorry, that is over the withdrawal limit of #{CASH_SYMBOL}#{CASH_LIMIT}"
+    end
   end
 end
