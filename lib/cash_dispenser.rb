@@ -3,6 +3,7 @@ class CashDispenser
     require_relative "./lang/#{language}.rb"
     self
   end
+
   def self.bill_counter(total)
     original_request = total
     bills = {}
@@ -19,12 +20,12 @@ class CashDispenser
         bills[key] = 0
       elsif number_needed <= number_available
         bills[key] = number_needed
-        total = total - (bill_type * number_needed)
+        total -= (bill_type * number_needed)
         left_over[key] = (value - number_needed)
       else
         actual = number_available
         bills[key] = actual
-        total = total - (bill_type * actual)
+        total -= (bill_type * actual)
         left_over[key] = actual - actual
       end
     end
@@ -32,26 +33,27 @@ class CashDispenser
     session_hash[:total] = total
     session_hash[:left_over] = left_over
     session_hash[:original_request] = original_request
-    return session_hash
+    session_hash
   end
+
   def self.bill_dispenser(hash)
     if hash[:total] != 0
-      puts "There are not enough bills to fulfill your request!"
+      puts 'There are not enough bills to fulfill your request!'
       puts "Do you want to receive the partial amount of #{CASH_SYMBOL}#{(hash[:original_request] - hash[:total])}? y or n"
       response = gets.chomp
       if response == 'y'
-        puts "Dispensing..."
+        puts 'Dispensing...'
         hash[:bills].each do |key, value|
           puts "#{value} #{CASH_SYMBOL} #{key}" + (value == 1 ? ' bill' : ' bills') unless value == 0
         end
         $available = hash[:left_over]
       elsif response == 'n'
-        puts "Thank you. Have a nice day."
+        puts 'Thank you. Have a nice day.'
       else
         puts "I'm sorry, I do not understand your response!"
       end
     elsif hash[:total] <= CASH_LIMIT
-      puts "Dispensing..."
+      puts 'Dispensing...'
       hash[:bills].each do |key, value|
         puts "#{value} #{CASH_SYMBOL} #{key}" + (value == 1 ? ' bill' : ' bills') unless value == 0
       end
